@@ -20,6 +20,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <linux/tiocl.h>
+#include <stdint.h>
 
 #include "consolation.h"
 
@@ -106,5 +107,30 @@ void scroll(int sc)
   fd = open("/dev/tty0",O_RDONLY);
   if(ioctl(fd, TIOCLINUX, &scr)<0)
     perror("scroll: TIOCLINUX");
+  close(fd);
+}
+
+void set_lut(void)
+{
+  int fd;
+  struct {
+    char subcode;
+    char padding[3];
+    uint32_t lut[8];
+  } l = { TIOCL_SELLOADLUT, 0, 0, 0,
+    0x00000000, /* control chars     */
+    0x03FFE000, /* digits and "-./"  */
+    0x87FFFFFE, /* uppercase and '_' */
+    0x07FFFFFE, /* lowercase         */
+    0x00000000,
+    0x00000000,
+    0xFF7FFFFF, /* latin-1 accented letters, not multiplication sign */
+    0xFF7FFFFF  /* latin-1 accented letters, not division sign */
+  }; /* all of Unicode above U+00FF is considered "word" chars, even
+        frames and the likes */
+
+  fd = open("/dev/tty0",O_RDWR);
+  if(ioctl(fd, TIOCLINUX, &l)<0)
+    perror("set_lut: TIOCLINUX");
   close(fd);
 }

@@ -227,6 +227,8 @@ event_main(void)
   if (!li)
     return 1;
 
+  set_lut();
+
   mainloop(li);
 
   libinput_unref(li);

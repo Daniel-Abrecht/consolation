@@ -29,6 +29,7 @@ void select_word(int x, int y);
 void select_line(int x, int y);
 void paste(void);
 void scroll(int sc);
+void set_lut(void);
 
 /* action.c */
 
