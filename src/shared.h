@@ -52,6 +52,7 @@ struct tools_options {
 	double speed;
 	int dwt;
 	enum libinput_config_accel_profile profile;
+	const char *word_chars;
 };
 
 struct tools_context {

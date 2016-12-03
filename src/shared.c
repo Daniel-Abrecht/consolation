@@ -65,6 +65,7 @@ enum options {
 	OPT_SCROLL_BUTTON,
 	OPT_SPEED,
 	OPT_PROFILE,
+	OPT_WORD_CHARS,
 	OPT_VERSION
 };
 
@@ -84,6 +85,7 @@ tools_usage()
 	       "--udev <seat>.... Use udev device discovery (default).\n"
 	       "		  Specifying a seat ID is optional.\n"
 	       "--device /path/to/device .... open the given device only\n"
+	       "--word-chars '-A-Za-z0-9,./?%&#:_=+@~' (ASCII only)\n"
 	       "\n"
 	       "Features:\n"
 	       "--enable-tap\n"
@@ -145,6 +147,7 @@ tools_init_context(struct tools_context *context)
 	options->seat = "seat0";
 	options->speed = 0.0;
 	options->profile = LIBINPUT_CONFIG_ACCEL_PROFILE_NONE;
+	options->word_chars = "-A-Za-z0-9,./?%&#:_=+@~";
 }
 
 int
@@ -181,6 +184,7 @@ tools_parse_args(int argc, char **argv, struct tools_context *context)
 			{ "set-scroll-button", 1, 0, OPT_SCROLL_BUTTON },
 			{ "set-profile", 1, 0, OPT_PROFILE },
 			{ "speed", 1, 0, OPT_SPEED },
+			{ "word-chars", 1, 0, OPT_WORD_CHARS },
 			{ 0, 0, 0, 0}
 		};
 
@@ -332,6 +336,13 @@ tools_parse_args(int argc, char **argv, struct tools_context *context)
 				tools_usage();
 				return 1;
 			}
+			break;
+		case OPT_WORD_CHARS:
+			if (!optarg) {
+				tools_usage();
+				return 1;
+			}
+			options->word_chars = optarg;
 			break;
 		default:
 			tools_usage();

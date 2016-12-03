@@ -227,7 +227,7 @@ event_main(void)
   if (!li)
     return 1;
 
-  set_lut();
+  set_lut(context.options.word_chars);
 
   mainloop(li);
 
