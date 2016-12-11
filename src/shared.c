@@ -36,6 +36,7 @@
 #include <libevdev/libevdev.h>
 
 #include "shared.h"
+#include "consolation.h"
 #include "config.h"
 
 #define streq(s1, s2) (strcmp((s1), (s2)) == 0)
@@ -85,7 +86,6 @@ tools_usage()
 	       "--udev <seat>.... Use udev device discovery (default).\n"
 	       "		  Specifying a seat ID is optional.\n"
 	       "--device /path/to/device .... open the given device only\n"
-	       "--word-chars '-A-Za-z0-9,./?%&#:_=+@~' (ASCII only)\n"
 	       "\n"
 	       "Features:\n"
 	       "--enable-tap\n"
@@ -112,7 +112,9 @@ tools_usage()
 	       "is not explicitly specified it is left at each device's default.\n"
 	       "\n"
 	       "Other options:\n"
-	       "--grab .......... Exclusively grab all openend devices\n"
+	       "--word-chars=<string>.... List of characters that make up words.\n"
+	       "                          Ranges (a-z, A-Z, 0-9 etc.) are allowed.\n"
+	       "--grab .......... Exclusively grab all openend devices.\n"
 	       "--verbose ....... Print debugging output.\n"
 	       "--version ....... Print version information.\n"
 	       "--help .......... Print this help.\n",
@@ -147,7 +149,7 @@ tools_init_context(struct tools_context *context)
 	options->seat = "seat0";
 	options->speed = 0.0;
 	options->profile = LIBINPUT_CONFIG_ACCEL_PROFILE_NONE;
-	options->word_chars = "-A-Za-z0-9,./?%&#:_=+@~";
+	options->word_chars = NULL;
 }
 
 int
@@ -511,4 +513,5 @@ tools_device_apply_config(struct libinput_device *device,
 			libinput_device_config_accel_set_profile(device,
 								 options->profile);
 	}
+	set_lut(options->word_chars);
 }

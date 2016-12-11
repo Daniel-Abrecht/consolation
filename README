@@ -17,6 +17,9 @@
   middle button:  paste selection
   right button:   set end of selection
   wheel:          scroll
+  double left click: select word
+                     (see --word-chars for the definition of a word.)
+  triple left click: select line
 
   It supports all the standard libinput options
 

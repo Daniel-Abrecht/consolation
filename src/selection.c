@@ -110,7 +110,7 @@ void scroll(int sc)
   close(fd);
 }
 
-static int goodchar(char x)
+static int goodchar(unsigned char x)
 {
   return x >= 0x20 && x < 0x7f;
 }
@@ -135,22 +135,23 @@ void set_lut(const char *def)
         frames and the likes */
 
   /* we allow changing only U+0020..U+7E */
-  l.lut[1] = l.lut[2] = l.lut[3] = 0;
-
-  while (*def) {
-    char c = *def++;
-    if (!goodchar(c))
-      continue;
-    if (*def == '-' && goodchar(def[1])) {
-      ++def;
-      for (; c <= *def; ++c)
+  if (def)
+  {
+    l.lut[1] = l.lut[2] = l.lut[3] = 0;
+    while (*def) {
+      char c = *def++;
+      if (!goodchar(c))
+        continue;
+      if (*def == '-' && goodchar(def[1])) {
+        ++def;
+        for (; c <= *def; ++c)
+          l.lut[c >> 5] |= 1 << (uint32_t)(c & 31);
+        ++def;
+      }
+      else
         l.lut[c >> 5] |= 1 << (uint32_t)(c & 31);
-      ++def;
     }
-    else
-      l.lut[c >> 5] |= 1 << (uint32_t)(c & 31);
   }
-
   fd = open("/dev/tty0",O_RDWR);
   if(ioctl(fd, TIOCLINUX, &l)<0)
     perror("set_lut: TIOCLINUX");
