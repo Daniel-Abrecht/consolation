@@ -21,8 +21,17 @@
 #include <sys/ioctl.h>
 #include <linux/tiocl.h>
 #include <stdint.h>
+#include <linux/kd.h>
 
 #include "consolation.h"
+
+static int
+check_mode(int fd)
+{
+  int mode;
+  ioctl(fd, KDGETMODE, &mode);
+  return mode==KD_TEXT;
+}
 
 void
 set_screen_size(void)
@@ -51,8 +60,9 @@ linux_selection(int xs, int ys, int xe, int ye, int sel_mode)
   s.sel.ye = ye;
   s.sel.sel_mode = sel_mode;
   fd = open("/dev/tty0",O_RDONLY);
-  if(ioctl(fd, TIOCLINUX, ((char*)&s)+1)<0)
-    perror("selection: TIOCLINUX");
+  if (check_mode(fd))
+    if (ioctl(fd, TIOCLINUX, ((char*)&s)+1)<0)
+      perror("selection: TIOCLINUX");
   close(fd);
 }
 
@@ -84,11 +94,11 @@ select_line(int x, int y)
 
 void paste(void)
 {
-  int fd;
   char subcode = TIOCL_PASTESEL;
-  fd = open("/dev/tty0",O_RDWR);
-  if(ioctl(fd, TIOCLINUX, &subcode)<0)
-    perror("paste: TIOCLINUX");
+  int fd = open("/dev/tty0",O_RDWR);
+  if (check_mode(fd))
+    if (ioctl(fd, TIOCLINUX, &subcode)<0)
+      perror("paste: TIOCLINUX");
   close(fd);
 }
 
@@ -105,8 +115,9 @@ void scroll(int sc)
   scr.subcode[3] = 0;
   scr.sc = sc;
   fd = open("/dev/tty0",O_RDONLY);
-  if(ioctl(fd, TIOCLINUX, &scr)<0)
-    perror("scroll: TIOCLINUX");
+  if (check_mode(fd))
+    if (ioctl(fd, TIOCLINUX, &scr)<0)
+      perror("scroll: TIOCLINUX");
   close(fd);
 }
 
@@ -153,7 +164,8 @@ void set_lut(const char *def)
     }
   }
   fd = open("/dev/tty0",O_RDWR);
-  if(ioctl(fd, TIOCLINUX, &l)<0)
-    perror("set_lut: TIOCLINUX");
+  if (check_mode(fd))
+    if (ioctl(fd, TIOCLINUX, &l)<0)
+      perror("set_lut: TIOCLINUX");
   close(fd);
 }
