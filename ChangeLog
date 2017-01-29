@@ -1,3 +1,7 @@
+Version 0.0.5 -- ???
+
+  * change --speed option to --set-speed to match libinput.
+
 Version 0.0.4 -- 11 Dec 2016
 
   [Adam Borowski]
