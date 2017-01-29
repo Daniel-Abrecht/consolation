@@ -106,7 +106,7 @@ tools_usage(void)
 	       "--set-scroll-method=[none|twofinger|edge|button] ... set the desired scroll method\n"
 	       "--set-scroll-button=BTN_MIDDLE ... set the button to the given button code\n"
 	       "--set-profile=[adaptive|flat].... set pointer acceleration profile\n"
-	       "--set-speed=<value>.... set pointer acceleration speed\n"
+	       "--set-speed=<value>.... set pointer acceleration speed (allowed range [-1, 1]) \n"
 	       "\n"
 	       "These options apply to all applicable devices, if a feature\n"
 	       "is not explicitly specified it is left at each device's default.\n"
