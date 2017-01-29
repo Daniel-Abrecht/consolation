@@ -185,7 +185,7 @@ tools_parse_args(int argc, char **argv, struct tools_context *context)
 			{ "set-scroll-method", 1, 0, OPT_SCROLL_METHOD },
 			{ "set-scroll-button", 1, 0, OPT_SCROLL_BUTTON },
 			{ "set-profile", 1, 0, OPT_PROFILE },
-			{ "speed", 1, 0, OPT_SPEED },
+			{ "set-speed", 1, 0, OPT_SPEED },
 			{ "word-chars", 1, 0, OPT_WORD_CHARS },
 			{ 0, 0, 0, 0}
 		};
