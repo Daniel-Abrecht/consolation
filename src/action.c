@@ -32,6 +32,23 @@ set_pointer(double x, double y)
     draw_pointer((int)xx,(int)yy);
 }
 
+static void
+select_mode(int mode, int xx, int yy, int x0, int y0)
+{
+  switch(mode)
+  {
+  case 0:
+    select_region(xx, yy, x0, y0);
+    break;
+  case 1:
+    select_words(xx, yy, x0, y0);
+    break;
+  case 2:
+    select_lines(xx, yy, x0, y0);
+    break;
+  }
+}
+
 void
 move_pointer(double x, double y)
 {
@@ -39,7 +56,7 @@ move_pointer(double x, double y)
   if (xx < 1) xx = 1; else if (xx > screen_width)  xx = screen_width;
   if (yy < 1) yy = 1; else if (yy > screen_height) yy = screen_height;
   if (x0 >= 0 && y0 >= 0)
-    select_region((int)xx,(int)yy,(int)x0,(int)y0);
+    select_mode(mode,(int)xx,(int)yy,(int)x0,(int)y0);
   else
     draw_pointer((int)xx,(int)yy);
 }
@@ -50,24 +67,14 @@ press_left_button(void)
   if ((int)x1==(int)xx && (int)y1==(int)yy)
   {
     mode = (mode+1)%3;
-    switch(mode)
-    {
-    case 0:
-      select_region((int)xx,(int)yy,(int)xx,(int)yy);
-      break;
-    case 1:
-      select_word((int)xx,(int)yy);
-      break;
-    case 2:
-      select_line((int)xx,(int)yy);
-      break;
-    }
+    select_mode(mode,(int)xx,(int)yy,(int)xx,(int)yy);
   }
   else
   {
-    x0=xx; y0=yy; x1=x0; y1=y0; mode = 0;
-    select_region((int)xx,(int)yy,(int)x0,(int)y0);
+    mode = 0;
+    select_region((int)xx,(int)yy,(int)xx,(int)yy);
   }
+  x0=xx; y0=yy; x1=x0; y1=y0;
 }
 
 void

@@ -56,8 +56,8 @@ linux_selection(int xs, int ys, int xe, int ye, int sel_mode)
   s.argp[1] = TIOCL_SETSEL;
   s.sel.xs = xs;
   s.sel.ys = ys;
-  s.sel.xe = xe;
-  s.sel.ye = ye;
+  s.sel.xe = xe<0 ? xs: xe;
+  s.sel.ye = ye<0 ? ys: ye;
   s.sel.sel_mode = sel_mode;
   fd = open("/dev/tty0",O_RDONLY);
   if (check_mode(fd))
@@ -75,21 +75,19 @@ draw_pointer(int x, int y)
 void
 select_region(int x, int y, int x2, int y2)
 {
-  if (x2 < 0) x2 = x;
-  if (y2 < 0) y2 = y;
   linux_selection(x, y, x2, y2, TIOCL_SELCHAR);
 }
 
 void
-select_word(int x, int y)
+select_words(int x, int y, int x2, int y2)
 {
-  linux_selection(x, y, x, y, TIOCL_SELWORD);
+  linux_selection(x, y, x2, y2, TIOCL_SELWORD);
 }
 
 void
-select_line(int x, int y)
+select_lines(int x, int y, int x2, int y2)
 {
-  linux_selection(x, y, x, y, TIOCL_SELLINE);
+  linux_selection(x, y, x2, y2, TIOCL_SELLINE);
 }
 
 void paste(void)

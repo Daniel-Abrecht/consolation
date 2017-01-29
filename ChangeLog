@@ -1,8 +1,9 @@
 Version 0.0.5 -- ???
 
-  * change --speed option to --set-speed to match libinput.
+  * Change --speed option to --set-speed to match libinput.
   * Disable consolation on graphic terminals.
     This avoid some crashes with some kernels.
+  * Add support for select by word. Suggested by Piotr Engelking
 
 Version 0.0.4 -- 11 Dec 2016
 
