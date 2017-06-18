@@ -1,5 +1,6 @@
-Version 0.0.5 -- ???
+Version 0.0.5 -- 29 Jun 2017
 
+  * Partial resync with libinput 1.6.0
   * Change --speed option to --set-speed to match libinput.
   * Disable consolation on graphic terminals.
     This avoid some crashes with some kernels.
