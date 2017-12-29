@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <fcntl.h>
+#include <getopt.h>
 #include <poll.h>
 #include <stdio.h>
 #include <signal.h>
@@ -37,11 +38,17 @@
 #include <sys/ioctl.h>
 
 #include <libinput.h>
+#include "config.h"
 #include "shared.h"
 #include "consolation.h"
 
-struct tools_context context;
+static struct tools_options options;
 static unsigned int stop = 0;
+static enum tools_backend backend = BACKEND_UDEV;
+static const char *seat_or_device = "seat0";
+static bool grab = false;
+static bool verbose = false;
+static const char *word_chars = NULL;
 
 static void
 handle_motion_event(struct libinput_event *ev)
@@ -143,7 +150,7 @@ handle_events(struct libinput *li)
     case LIBINPUT_EVENT_DEVICE_ADDED:
     case LIBINPUT_EVENT_DEVICE_REMOVED:
       tools_device_apply_config(libinput_event_get_device(ev),
-          &context.options);
+          &options);
       break;
     case LIBINPUT_EVENT_POINTER_MOTION:
       handle_motion_event(ev);
@@ -211,11 +218,138 @@ mainloop(struct libinput *li)
     handle_events(li);
 }
 
+void
+usage(void)
+{
+  printf("Usage: %s [options] [--udev [<seat>]|--device /dev/input/event0]\n"
+         "--udev <seat>.... Use udev device discovery (default).\n"
+         "                  Specifying a seat ID is optional.\n"
+         "--device /path/to/device .... open the given device only\n"
+         "\n"
+         "Features:\n"
+         "--enable-tap\n"
+         "--disable-tap.... enable/disable tapping\n"
+         "--enable-drag\n"
+         "--disable-drag.... enable/disable tap-n-drag\n"
+         "--enable-drag-lock\n"
+         "--disable-drag-lock.... enable/disable tapping drag lock\n"
+         "--enable-natural-scrolling\n"
+         "--disable-natural-scrolling.... enable/disable natural scrolling\n"
+         "--enable-left-handed\n"
+         "--disable-left-handed.... enable/disable left-handed button configuration\n"
+         "--enable-middlebutton\n"
+         "--disable-middlebutton.... enable/disable middle button emulation\n"
+         "--enable-dwt\n"
+         "--disable-dwt..... enable/disable disable-while-typing\n"
+         "--set-click-method=[none|clickfinger|buttonareas] .... set the desired click method\n"
+         "--set-scroll-method=[none|twofinger|edge|button] ... set the desired scroll method\n"
+         "--set-scroll-button=BTN_MIDDLE ... set the button to the given button code\n"
+         "--set-profile=[adaptive|flat].... set pointer acceleration profile\n"
+         "--set-speed=<value>.... set pointer acceleration speed (allowed range [-1, 1]) \n"
+         "--set-tap-map=[lrm|lmr] ... set button mapping for tapping\n"
+         "\n"
+         "These options apply to all applicable devices, if a feature\n"
+         "is not explicitly specified it is left at each device's default.\n"
+         "\n"
+         "Other options:\n"
+         "--word-chars=<string>.... List of characters that make up words.\n"
+         "                          Ranges (a-z, A-Z, 0-9 etc.) are allowed.\n"
+         "--grab .......... Exclusively grab all opened devices.\n"
+         "--verbose ....... Print debugging output.\n"
+         "--version ....... Print version information.\n"
+         "--help .......... Print this help.\n",
+         program_invocation_short_name);
+}
+
+static void
+version(void)
+{
+  printf("%s %s\n", PACKAGE_NAME, PACKAGE_VERSION);
+}
+
+static int
+parse_args(int argc, char **argv)
+{
+  tools_init_options(&options);
+
+  while (1) {
+    int c;
+    int option_index = 0;
+    enum {
+      OPT_DEVICE = 1,
+      OPT_UDEV,
+      OPT_GRAB,
+      OPT_HELP,
+      OPT_VERBOSE,
+      OPT_VERSION,
+      OPT_WORD_CHARS
+    };
+    static struct option opts[] = {
+      CONFIGURATION_OPTIONS,
+      { "help",                      no_argument,       0, 'h' },
+      { "device",                    required_argument, 0, OPT_DEVICE },
+      { "udev",                      required_argument, 0, OPT_UDEV },
+      { "grab",                      no_argument,       0, OPT_GRAB },
+      { "verbose",                   no_argument,       0, OPT_VERBOSE },
+      { "version",                   no_argument,       0, OPT_VERSION },
+      { "word-chars",                required_argument, 0, OPT_WORD_CHARS },
+      { 0, 0, 0, 0}
+    };
+
+    c = getopt_long(argc, argv, "h", opts, &option_index);
+    if (c == -1)
+      break;
+
+    switch(c) {
+    case '?':
+      exit(1);
+      break;
+    case 'h':
+      usage();
+      exit(0);
+      break;
+    case OPT_VERSION:
+      version();
+      exit(0);
+      break;
+    case OPT_DEVICE:
+      backend = BACKEND_DEVICE;
+      seat_or_device = optarg;
+      break;
+    case OPT_UDEV:
+      backend = BACKEND_UDEV;
+      seat_or_device = optarg;
+      break;
+    case OPT_GRAB:
+      grab = true;
+      break;
+    case OPT_VERBOSE:
+      verbose = true;
+      break;
+    case OPT_WORD_CHARS:
+      word_chars = optarg;
+      break;
+    default:
+      if (tools_parse_option(c, optarg, &options) != 0) {
+        usage();
+        return 1;
+      }
+      break;
+    }
+  }
+  if (optind < argc) {
+    usage();
+    return 1;
+  }
+  return 0;
+}
+
+
 int
 event_init(int argc, char **argv)
 {
-  tools_init_context(&context);
-  return tools_parse_args(argc, argv, &context);
+  tools_init_options(&options);
+  return parse_args(argc, argv);
 }
 
 int
@@ -223,7 +357,8 @@ event_main(void)
 {
   struct libinput *li;
 
-  li = tools_open_backend(&context);
+  set_lut(word_chars);
+  li = tools_open_backend(backend, seat_or_device, verbose, grab);
   if (!li)
     return 1;
 

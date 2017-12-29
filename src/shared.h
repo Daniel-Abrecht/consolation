@@ -1,7 +1,8 @@
 /* Adapted from test/shared.h from the libinput distribution */
-/* test/shared.h 1.3.3:
+/* test/shared.h 1.9.4:
+ *
  * Copyright © 2014 Red Hat, Inc.
- * Modifications: Copyright © 2016 Bill Allombert <ballombe@debian.org>
+ * Modifications: Copyright © 2017 Bill Allombert <ballombe@debian.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,7 +27,56 @@
 #ifndef _SHARED_H_
 #define _SHARED_H_
 
+#include <stdbool.h>
+
 #include <libinput.h>
+
+enum configuration_options {
+	OPT_TAP_ENABLE = 256,
+	OPT_TAP_DISABLE,
+	OPT_TAP_MAP,
+	OPT_DRAG_ENABLE,
+	OPT_DRAG_DISABLE,
+	OPT_DRAG_LOCK_ENABLE,
+	OPT_DRAG_LOCK_DISABLE,
+	OPT_NATURAL_SCROLL_ENABLE,
+	OPT_NATURAL_SCROLL_DISABLE,
+	OPT_LEFT_HANDED_ENABLE,
+	OPT_LEFT_HANDED_DISABLE,
+	OPT_MIDDLEBUTTON_ENABLE,
+	OPT_MIDDLEBUTTON_DISABLE,
+	OPT_DWT_ENABLE,
+	OPT_DWT_DISABLE,
+	OPT_CLICK_METHOD,
+	OPT_SCROLL_METHOD,
+	OPT_SCROLL_BUTTON,
+	OPT_SPEED,
+	OPT_PROFILE,
+	OPT_DISABLE_SENDEVENTS,
+};
+
+#define CONFIGURATION_OPTIONS \
+	{ "disable-sendevents",        required_argument, 0, OPT_DISABLE_SENDEVENTS }, \
+	{ "enable-tap",                no_argument,       0, OPT_TAP_ENABLE }, \
+	{ "disable-tap",               no_argument,       0, OPT_TAP_DISABLE }, \
+	{ "enable-drag",               no_argument,       0, OPT_DRAG_ENABLE }, \
+	{ "disable-drag",              no_argument,       0, OPT_DRAG_DISABLE }, \
+	{ "enable-drag-lock",          no_argument,       0, OPT_DRAG_LOCK_ENABLE }, \
+	{ "disable-drag-lock",         no_argument,       0, OPT_DRAG_LOCK_DISABLE }, \
+	{ "enable-natural-scrolling",  no_argument,       0, OPT_NATURAL_SCROLL_ENABLE }, \
+	{ "disable-natural-scrolling", no_argument,       0, OPT_NATURAL_SCROLL_DISABLE }, \
+	{ "enable-left-handed",        no_argument,       0, OPT_LEFT_HANDED_ENABLE }, \
+	{ "disable-left-handed",       no_argument,       0, OPT_LEFT_HANDED_DISABLE }, \
+	{ "enable-middlebutton",       no_argument,       0, OPT_MIDDLEBUTTON_ENABLE }, \
+	{ "disable-middlebutton",      no_argument,       0, OPT_MIDDLEBUTTON_DISABLE }, \
+	{ "enable-dwt",                no_argument,       0, OPT_DWT_ENABLE }, \
+	{ "disable-dwt",               no_argument,       0, OPT_DWT_DISABLE }, \
+	{ "set-click-method",          required_argument, 0, OPT_CLICK_METHOD }, \
+	{ "set-scroll-method",         required_argument, 0, OPT_SCROLL_METHOD }, \
+	{ "set-scroll-button",         required_argument, 0, OPT_SCROLL_BUTTON }, \
+	{ "set-profile",               required_argument, 0, OPT_PROFILE }, \
+	{ "set-tap-map",               required_argument, 0, OPT_TAP_MAP }, \
+	{ "set-speed",                 required_argument, 0, OPT_SPEED }
 
 enum tools_backend {
 	BACKEND_DEVICE,
@@ -34,12 +84,6 @@ enum tools_backend {
 };
 
 struct tools_options {
-	enum tools_backend backend;
-	const char *device; /* if backend is BACKEND_DEVICE */
-	const char *seat; /* if backend is BACKEND_UDEV */
-	int grab; /* EVIOCGRAB */
-
-	int verbose;
 	int tapping;
 	int drag;
 	int drag_lock;
@@ -53,19 +97,22 @@ struct tools_options {
 	double speed;
 	int dwt;
 	enum libinput_config_accel_profile profile;
-	const char *word_chars;
+	char disable_pattern[64];
 };
 
-struct tools_context {
-	struct tools_options options;
-	void *user_data;
-};
-
-void tools_init_context(struct tools_context *context);
-int tools_parse_args(int argc, char **argv, struct tools_context *context);
-struct libinput* tools_open_backend(struct tools_context *context);
+void tools_init_options(struct tools_options *options);
+int tools_parse_option(int option,
+		       const char *optarg,
+		       struct tools_options *options);
+struct libinput* tools_open_backend(enum tools_backend which,
+				    const char *seat_or_device,
+				    bool verbose,
+				    bool grab);
 void tools_device_apply_config(struct libinput_device *device,
 			       struct tools_options *options);
-void tools_usage(void);
+int tools_exec_command(const char *prefix, int argc, char **argv);
+
+bool find_touchpad_device(char *path, size_t path_len);
+bool is_touchpad_device(const char *devnode);
 
 #endif

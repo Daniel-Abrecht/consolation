@@ -1,7 +1,8 @@
 /* Adapted from test/shared.c from the libinput distribution */
-/* test/shared.c 1.3.3:
+/* test/shared.c 1.9.4:
+ *
  * Copyright © 2014 Red Hat, Inc.
- * Modifications: Copyright © 2016 Bill Allombert <ballombe@debian.org>
+ * Modifications: Copyright © 2017 Bill Allombert <ballombe@debian.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,53 +24,36 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#define _GNU_SOURCE
-
 #include <errno.h>
 #include <fcntl.h>
+#include <fnmatch.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <libudev.h>
+
 #include <libevdev/libevdev.h>
 
 #include "shared.h"
-#include "consolation.h"
-#include "config.h"
 
 #define streq(s1, s2) (strcmp((s1), (s2)) == 0)
 
-enum options {
-	OPT_DEVICE,
-	OPT_UDEV,
-	OPT_GRAB,
-	OPT_HELP,
-	OPT_VERBOSE,
-	OPT_TAP_ENABLE,
-	OPT_TAP_DISABLE,
-	OPT_TAP_MAP,
-	OPT_DRAG_ENABLE,
-	OPT_DRAG_DISABLE,
-	OPT_DRAG_LOCK_ENABLE,
-	OPT_DRAG_LOCK_DISABLE,
-	OPT_NATURAL_SCROLL_ENABLE,
-	OPT_NATURAL_SCROLL_DISABLE,
-	OPT_LEFT_HANDED_ENABLE,
-	OPT_LEFT_HANDED_DISABLE,
-	OPT_MIDDLEBUTTON_ENABLE,
-	OPT_MIDDLEBUTTON_DISABLE,
-	OPT_DWT_ENABLE,
-	OPT_DWT_DISABLE,
-	OPT_CLICK_METHOD,
-	OPT_SCROLL_METHOD,
-	OPT_SCROLL_BUTTON,
-	OPT_SPEED,
-	OPT_PROFILE,
-	OPT_WORD_CHARS,
-	OPT_VERSION
-};
+static inline char*
+safe_strdup(const char *str)
+{
+        char *s;
+
+        if (!str)
+                return NULL;
+
+        s = strdup(str);
+        if (!s)
+                abort();
+        return s;
+}
 
 static void
 log_handler(struct libinput *li,
@@ -81,61 +65,8 @@ log_handler(struct libinput *li,
 }
 
 void
-tools_usage(void)
+tools_init_options(struct tools_options *options)
 {
-	printf("Usage: %s [options] [--udev [<seat>]|--device /dev/input/event0]\n"
-	       "--udev <seat>.... Use udev device discovery (default).\n"
-	       "		  Specifying a seat ID is optional.\n"
-	       "--device /path/to/device .... open the given device only\n"
-	       "\n"
-	       "Features:\n"
-	       "--enable-tap\n"
-	       "--disable-tap.... enable/disable tapping\n"
-	       "--enable-drag\n"
-	       "--disable-drag.... enable/disable tap-n-drag\n"
-	       "--enable-drag-lock\n"
-	       "--disable-drag-lock.... enable/disable tapping drag lock\n"
-	       "--enable-natural-scrolling\n"
-	       "--disable-natural-scrolling.... enable/disable natural scrolling\n"
-	       "--enable-left-handed\n"
-	       "--disable-left-handed.... enable/disable left-handed button configuration\n"
-	       "--enable-middlebutton\n"
-	       "--disable-middlebutton.... enable/disable middle button emulation\n"
-	       "--enable-dwt\n"
-	       "--disable-dwt..... enable/disable disable-while-typing\n"
-	       "--set-click-method=[none|clickfinger|buttonareas] .... set the desired click method\n"
-	       "--set-scroll-method=[none|twofinger|edge|button] ... set the desired scroll method\n"
-	       "--set-scroll-button=BTN_MIDDLE ... set the button to the given button code\n"
-	       "--set-profile=[adaptive|flat].... set pointer acceleration profile\n"
-	       "--set-speed=<value>.... set pointer acceleration speed (allowed range [-1, 1]) \n"
-	       "--set-tap-map=[lrm|lmr] ... set button mapping for tapping\n"
-	       "\n"
-	       "These options apply to all applicable devices, if a feature\n"
-	       "is not explicitly specified it is left at each device's default.\n"
-	       "\n"
-	       "Other options:\n"
-	       "--word-chars=<string>.... List of characters that make up words.\n"
-	       "                          Ranges (a-z, A-Z, 0-9 etc.) are allowed.\n"
-	       "--grab .......... Exclusively grab all openend devices.\n"
-	       "--verbose ....... Print debugging output.\n"
-	       "--version ....... Print version information.\n"
-	       "--help .......... Print this help.\n",
-		program_invocation_short_name);
-}
-
-void
-tools_version(void)
-{
-	printf("%s %s\n", PACKAGE_NAME, PACKAGE_VERSION);
-}
-
-void
-tools_init_context(struct tools_context *context)
-{
-	struct tools_options *options = &context->options;
-
-	context->user_data = NULL;
-
 	memset(options, 0, sizeof(*options));
 	options->tapping = -1;
 	options->tap_map = -1;
@@ -148,82 +79,16 @@ tools_init_context(struct tools_context *context)
 	options->click_method = -1;
 	options->scroll_method = -1;
 	options->scroll_button = -1;
-	options->backend = BACKEND_UDEV;
-	options->seat = "seat0";
 	options->speed = 0.0;
 	options->profile = LIBINPUT_CONFIG_ACCEL_PROFILE_NONE;
-	options->word_chars = NULL;
 }
 
 int
-tools_parse_args(int argc, char **argv, struct tools_context *context)
+tools_parse_option(int option,
+		   const char *optarg,
+		   struct tools_options *options)
 {
-	struct tools_options *options = &context->options;
-
-	while (1) {
-		int c;
-		int option_index = 0;
-		static struct option opts[] = {
-			{ "device", 1, 0, OPT_DEVICE },
-			{ "udev", 0, 0, OPT_UDEV },
-			{ "grab", 0, 0, OPT_GRAB },
-			{ "help", 0, 0, OPT_HELP },
-			{ "version", 0, 0, OPT_VERSION },
-			{ "verbose", 0, 0, OPT_VERBOSE },
-			{ "enable-tap", 0, 0, OPT_TAP_ENABLE },
-			{ "disable-tap", 0, 0, OPT_TAP_DISABLE },
-			{ "enable-drag", 0, 0, OPT_DRAG_ENABLE },
-			{ "disable-drag", 0, 0, OPT_DRAG_DISABLE },
-			{ "enable-drag-lock", 0, 0, OPT_DRAG_LOCK_ENABLE },
-			{ "disable-drag-lock", 0, 0, OPT_DRAG_LOCK_DISABLE },
-			{ "enable-natural-scrolling", 0, 0, OPT_NATURAL_SCROLL_ENABLE },
-			{ "disable-natural-scrolling", 0, 0, OPT_NATURAL_SCROLL_DISABLE },
-			{ "enable-left-handed", 0, 0, OPT_LEFT_HANDED_ENABLE },
-			{ "disable-left-handed", 0, 0, OPT_LEFT_HANDED_DISABLE },
-			{ "enable-middlebutton", 0, 0, OPT_MIDDLEBUTTON_ENABLE },
-			{ "disable-middlebutton", 0, 0, OPT_MIDDLEBUTTON_DISABLE },
-			{ "enable-dwt", 0, 0, OPT_DWT_ENABLE },
-			{ "disable-dwt", 0, 0, OPT_DWT_DISABLE },
-			{ "set-click-method", 1, 0, OPT_CLICK_METHOD },
-			{ "set-scroll-method", 1, 0, OPT_SCROLL_METHOD },
-			{ "set-scroll-button", 1, 0, OPT_SCROLL_BUTTON },
-			{ "set-profile", 1, 0, OPT_PROFILE },
-			{ "set-speed", 1, 0, OPT_SPEED },
-			{ "word-chars", 1, 0, OPT_WORD_CHARS },
-			{ 0, 0, 0, 0}
-		};
-
-		c = getopt_long(argc, argv, "h", opts, &option_index);
-		if (c == -1)
-			break;
-
-		switch(c) {
-		case 'h':
-		case OPT_HELP:
-			tools_usage();
-			exit(0);
-		case OPT_VERSION:
-			tools_version();
-			exit(0);
-		case OPT_DEVICE:
-			options->backend = BACKEND_DEVICE;
-			if (!optarg) {
-				tools_usage();
-				return 1;
-			}
-			options->device = optarg;
-			break;
-		case OPT_UDEV:
-			options->backend = BACKEND_UDEV;
-			if (optarg)
-				options->seat = optarg;
-			break;
-		case OPT_GRAB:
-			options->grab = 1;
-			break;
-		case OPT_VERBOSE:
-			options->verbose = 1;
-			break;
+	switch(option) {
 		case OPT_TAP_ENABLE:
 			options->tapping = 1;
 			break;
@@ -231,16 +96,14 @@ tools_parse_args(int argc, char **argv, struct tools_context *context)
 			options->tapping = 0;
 			break;
 		case OPT_TAP_MAP:
-			if (!optarg) {
-				tools_usage();
+			if (!optarg)
 				return 1;
-			}
+
 			if (streq(optarg, "lrm")) {
 				options->tap_map = LIBINPUT_CONFIG_TAP_MAP_LRM;
 			} else if (streq(optarg, "lmr")) {
 				options->tap_map = LIBINPUT_CONFIG_TAP_MAP_LMR;
 			} else {
-				tools_usage();
 				return 1;
 			}
 			break;
@@ -281,10 +144,9 @@ tools_parse_args(int argc, char **argv, struct tools_context *context)
 			options->dwt = LIBINPUT_CONFIG_DWT_DISABLED;
 			break;
 		case OPT_CLICK_METHOD:
-			if (!optarg) {
-				tools_usage();
+			if (!optarg)
 				return 1;
-			}
+
 			if (streq(optarg, "none")) {
 				options->click_method =
 				LIBINPUT_CONFIG_CLICK_METHOD_NONE;
@@ -295,15 +157,13 @@ tools_parse_args(int argc, char **argv, struct tools_context *context)
 				options->click_method =
 				LIBINPUT_CONFIG_CLICK_METHOD_BUTTON_AREAS;
 			} else {
-				tools_usage();
 				return 1;
 			}
 			break;
 		case OPT_SCROLL_METHOD:
-			if (!optarg) {
-				tools_usage();
+			if (!optarg)
 				return 1;
-			}
+
 			if (streq(optarg, "none")) {
 				options->scroll_method =
 				LIBINPUT_CONFIG_SCROLL_NO_SCROLL;
@@ -317,17 +177,16 @@ tools_parse_args(int argc, char **argv, struct tools_context *context)
 				options->scroll_method =
 				LIBINPUT_CONFIG_SCROLL_ON_BUTTON_DOWN;
 			} else {
-				tools_usage();
 				return 1;
 			}
 			break;
 		case OPT_SCROLL_BUTTON:
 			if (!optarg) {
-				tools_usage();
 				return 1;
 			}
 			options->scroll_button =
-			libevdev_event_code_from_name(EV_KEY, optarg);
+			libevdev_event_code_from_name(EV_KEY,
+						      optarg);
 			if (options->scroll_button == -1) {
 				fprintf(stderr,
 					"Invalid button %s\n",
@@ -336,53 +195,64 @@ tools_parse_args(int argc, char **argv, struct tools_context *context)
 			}
 			break;
 		case OPT_SPEED:
-			if (!optarg) {
-				tools_usage();
+			if (!optarg)
 				return 1;
-			}
 			options->speed = atof(optarg);
 			break;
 		case OPT_PROFILE:
-			if (!optarg) {
-				tools_usage();
+			if (!optarg)
 				return 1;
-			}
-			if (streq(optarg, "adaptive")) {
+
+			if (streq(optarg, "adaptive"))
 				options->profile = LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE;
-			} else if (streq(optarg, "flat")) {
-				options->profile = LIBINPUT_CONFIG_ACCEL_PROFILE_FLAT;
-			} else {
-				tools_usage();
-				return 1;
-			}
+			else if (streq(optarg, "flat"))
+			      options->profile = LIBINPUT_CONFIG_ACCEL_PROFILE_FLAT;
+			else
+			      return 1;
 			break;
-		case OPT_WORD_CHARS:
-			if (!optarg) {
-				tools_usage();
+		case OPT_DISABLE_SENDEVENTS:
+			if (!optarg)
 				return 1;
-			}
-			options->word_chars = optarg;
+
+			snprintf(options->disable_pattern,
+				 sizeof(options->disable_pattern),
+				 "%s",
+				 optarg);
 			break;
-		default:
-			tools_usage();
-			return 1;
-		}
-
-	}
-
-	if (optind < argc) {
-		tools_usage();
-		return 1;
 	}
 
 	return 0;
 }
 
+static int
+open_restricted(const char *path, int flags, void *user_data)
+{
+	bool *grab = user_data;
+	int fd = open(path, flags);
+
+	if (fd < 0)
+		fprintf(stderr, "Failed to open %s (%s)\n",
+			path, strerror(errno));
+	else if (*grab && ioctl(fd, EVIOCGRAB, (void*)1) == -1)
+		fprintf(stderr, "Grab requested, but failed for %s (%s)\n",
+			path, strerror(errno));
+
+	return fd < 0 ? -errno : fd;
+}
+
+static void
+close_restricted(int fd, void *user_data)
+{
+	close(fd);
+}
+
+static const struct libinput_interface interface = {
+	.open_restricted = open_restricted,
+	.close_restricted = close_restricted,
+};
+
 static struct libinput *
-open_udev(const struct libinput_interface *interface,
-	  void *userdata,
-	  const char *seat,
-	  int verbose)
+tools_open_udev(const char *seat, bool verbose, bool grab)
 {
 	struct libinput *li;
 	struct udev *udev = udev_new();
@@ -392,7 +262,7 @@ open_udev(const struct libinput_interface *interface,
 		return NULL;
 	}
 
-	li = libinput_udev_create_context(interface, userdata, udev);
+	li = libinput_udev_create_context(&interface, &grab, udev);
 	if (!li) {
 		fprintf(stderr, "Failed to initialize context from udev\n");
 		goto out;
@@ -416,15 +286,12 @@ out:
 }
 
 static struct libinput *
-open_device(const struct libinput_interface *interface,
-	    void *userdata,
-	    const char *path,
-	    int verbose)
+tools_open_device(const char *path, bool verbose, bool grab)
 {
 	struct libinput_device *device;
 	struct libinput *li;
 
-	li = libinput_path_create_context(interface, userdata);
+	li = libinput_path_create_context(&interface, &grab);
 	if (!li) {
 		fprintf(stderr, "Failed to initialize context from %s\n", path);
 		return NULL;
@@ -445,46 +312,24 @@ open_device(const struct libinput_interface *interface,
 	return li;
 }
 
-static int
-open_restricted(const char *path, int flags, void *user_data)
-{
-	const struct tools_context *context = user_data;
-	int fd = open(path, flags);
-
-	if (fd < 0)
-		fprintf(stderr, "Failed to open %s (%s)\n",
-			path, strerror(errno));
-	else if (context->options.grab &&
-		 ioctl(fd, EVIOCGRAB, (void*)1) == -1)
-		fprintf(stderr, "Grab requested, but failed for %s (%s)\n",
-			path, strerror(errno));
-
-	return fd < 0 ? -errno : fd;
-}
-
-static void
-close_restricted(int fd, void *user_data)
-{
-	close(fd);
-}
-
-static const struct libinput_interface interface = {
-	.open_restricted = open_restricted,
-	.close_restricted = close_restricted,
-};
-
 struct libinput *
-tools_open_backend(struct tools_context *context)
+tools_open_backend(enum tools_backend which,
+		   const char *seat_or_device,
+		   bool verbose,
+		   bool grab)
 {
-	struct libinput *li = NULL;
-	struct tools_options *options = &context->options;
+	struct libinput *li;
 
-	if (options->backend == BACKEND_UDEV) {
-		li = open_udev(&interface, context, options->seat, options->verbose);
-	} else if (options->backend == BACKEND_DEVICE) {
-		li = open_device(&interface, context, options->device, options->verbose);
-	} else
+	switch (which) {
+	case BACKEND_UDEV:
+		li = tools_open_udev(seat_or_device, verbose, grab);
+		break;
+	case BACKEND_DEVICE:
+		li = tools_open_device(seat_or_device, verbose, grab);
+		break;
+	default:
 		abort();
+	}
 
 	return li;
 }
@@ -495,9 +340,9 @@ tools_device_apply_config(struct libinput_device *device,
 {
 	if (options->tapping != -1)
 		libinput_device_config_tap_set_enabled(device, options->tapping);
-        if (options->tap_map != (enum libinput_config_tap_button_map)-1)
-                libinput_device_config_tap_set_button_map(device,
-                                                          options->tap_map);
+	if (options->tap_map != (enum libinput_config_tap_button_map)-1)
+		libinput_device_config_tap_set_button_map(device,
+							  options->tap_map);
 	if (options->drag != -1)
 		libinput_device_config_tap_set_drag_enabled(device,
 							    options->drag);
@@ -516,10 +361,10 @@ tools_device_apply_config(struct libinput_device *device,
 	if (options->dwt != -1)
 		libinput_device_config_dwt_set_enabled(device, options->dwt);
 
-	if (options->click_method != -1)
+	if (options->click_method != (enum libinput_config_click_method)-1)
 		libinput_device_config_click_set_method(device, options->click_method);
 
-	if (options->scroll_method != -1)
+	if (options->scroll_method != (enum libinput_config_scroll_method)-1)
 		libinput_device_config_scroll_set_method(device,
 							 options->scroll_method);
 	if (options->scroll_button != -1)
@@ -533,5 +378,92 @@ tools_device_apply_config(struct libinput_device *device,
 			libinput_device_config_accel_set_profile(device,
 								 options->profile);
 	}
-	set_lut(options->word_chars);
+
+	if (libinput_device_config_send_events_get_modes(device) &
+	      LIBINPUT_CONFIG_SEND_EVENTS_DISABLED &&
+	    fnmatch(options->disable_pattern,
+		    libinput_device_get_name(device),
+		   0) !=  FNM_NOMATCH) {
+		libinput_device_config_send_events_set_mode(device,
+					    LIBINPUT_CONFIG_SEND_EVENTS_DISABLED);
+	}
+}
+
+static char*
+find_device(const char *udev_tag)
+{
+	struct udev *udev;
+	struct udev_enumerate *e;
+	struct udev_list_entry *entry;
+	struct udev_device *device;
+	const char *path, *sysname;
+	char *device_node = NULL;
+
+	udev = udev_new();
+	e = udev_enumerate_new(udev);
+	udev_enumerate_add_match_subsystem(e, "input");
+	udev_enumerate_scan_devices(e);
+
+	udev_list_entry_foreach(entry, udev_enumerate_get_list_entry(e)) {
+		path = udev_list_entry_get_name(entry);
+		device = udev_device_new_from_syspath(udev, path);
+		if (!device)
+			continue;
+
+		sysname = udev_device_get_sysname(device);
+		if (strncmp("event", sysname, 5) != 0) {
+			udev_device_unref(device);
+			continue;
+		}
+
+		if (udev_device_get_property_value(device, udev_tag))
+			device_node = safe_strdup(udev_device_get_devnode(device));
+
+		udev_device_unref(device);
+
+		if (device_node)
+			break;
+	}
+	udev_enumerate_unref(e);
+	udev_unref(udev);
+
+	return device_node;
+}
+
+bool
+find_touchpad_device(char *path, size_t path_len)
+{
+	char *devnode = find_device("ID_INPUT_TOUCHPAD");
+
+	if (devnode) {
+		snprintf(path, path_len, "%s", devnode);
+		free(devnode);
+	}
+
+	return devnode != NULL;
+}
+
+bool
+is_touchpad_device(const char *devnode)
+{
+	struct udev *udev;
+	struct udev_device *dev = NULL;
+	struct stat st;
+	bool is_touchpad = false;
+
+	if (stat(devnode, &st) < 0)
+		return false;
+
+	udev = udev_new();
+	dev = udev_device_new_from_devnum(udev, 'c', st.st_rdev);
+	if (!dev)
+		goto out;
+
+	is_touchpad = udev_device_get_property_value(dev, "ID_INPUT_TOUCHPAD");
+out:
+	if (dev)
+		udev_device_unref(dev);
+	udev_unref(udev);
+
+	return is_touchpad;
 }

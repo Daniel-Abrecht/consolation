@@ -1,6 +1,8 @@
 Version 0.0.6 -- UNRELEASED
 
+  * resync with libinput 1.9.4
   * Add option --set-tap-map from libinput 1.5
+  * --help: Fix typo reported by Jakub Wilk.
 
 Version 0.0.5 -- 29 Jun 2017
 
