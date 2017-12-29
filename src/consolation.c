@@ -47,6 +47,6 @@ int main(int argc, char **argv)
 {
   if (event_init(argc, argv))
     return 1;
-  if (!csl_daemon()) event_main();
+  if (nodaemon || !csl_daemon()) event_main();
   return 0;
 }

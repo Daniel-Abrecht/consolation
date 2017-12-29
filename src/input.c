@@ -42,6 +42,11 @@
 #include "shared.h"
 #include "consolation.h"
 
+
+int nodaemon = false;
+unsigned int screen_width;
+unsigned int screen_height;
+
 static struct tools_options options;
 static unsigned int stop = 0;
 static enum tools_backend backend = BACKEND_UDEV;
@@ -255,6 +260,7 @@ usage(void)
          "--word-chars=<string>.... List of characters that make up words.\n"
          "                          Ranges (a-z, A-Z, 0-9 etc.) are allowed.\n"
          "--grab .......... Exclusively grab all opened devices.\n"
+         "--no-daemon...... Do not detach and run in the background.\n"
          "--verbose ....... Print debugging output.\n"
          "--version ....... Print version information.\n"
          "--help .......... Print this help.\n",
@@ -279,6 +285,7 @@ parse_args(int argc, char **argv)
       OPT_DEVICE = 1,
       OPT_UDEV,
       OPT_GRAB,
+      OPT_NO_DAEMON,
       OPT_HELP,
       OPT_VERBOSE,
       OPT_VERSION,
@@ -290,6 +297,7 @@ parse_args(int argc, char **argv)
       { "device",                    required_argument, 0, OPT_DEVICE },
       { "udev",                      required_argument, 0, OPT_UDEV },
       { "grab",                      no_argument,       0, OPT_GRAB },
+      { "no-daemon",                 no_argument,       0, OPT_NO_DAEMON },
       { "verbose",                   no_argument,       0, OPT_VERBOSE },
       { "version",                   no_argument,       0, OPT_VERSION },
       { "word-chars",                required_argument, 0, OPT_WORD_CHARS },
@@ -322,6 +330,9 @@ parse_args(int argc, char **argv)
       break;
     case OPT_GRAB:
       grab = true;
+      break;
+    case OPT_NO_DAEMON:
+      nodaemon = true;
       break;
     case OPT_VERBOSE:
       verbose = true;

@@ -15,10 +15,14 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+/* options */
+
+extern int nodaemon;
+
 /* global state */
 
-unsigned int screen_width;
-unsigned int screen_height;
+extern unsigned int screen_width;
+extern unsigned int screen_height;
 
 /* selection.c */
 
