@@ -1,4 +1,4 @@
-/* Adpated from test/event-debug.c from the libinput distribution */
+/* Adapted from test/event-debug.c from the libinput distribution */
 /* test/event-debug.c 1.3.3:
  * Copyright © 2014 Red Hat, Inc.
  * Modifications: Copyright © 2016 Bill Allombert <ballombe@debian.org>
