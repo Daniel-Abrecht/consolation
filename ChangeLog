@@ -1,4 +1,4 @@
-Version 0.0.6 -- UNRELEASED
+Version 0.0.6 -- 26 Jan 2018
 
   * resync with libinput 1.9.4
   * Option --help: Fix typo reported by Jakub Wilk.
