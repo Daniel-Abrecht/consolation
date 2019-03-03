@@ -1,0 +1,6 @@
+#
+# This is a POSIX shell fragment
+# Options for consolation, see 'man consolation' for options.
+# No options is fine for most users.
+
+DAEMON_OPTS=""

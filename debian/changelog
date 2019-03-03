@@ -1,0 +1,66 @@
+consolation (0.0.7-1.1) UNRELEASED; urgency=medium
+
+  * Non-maintainer upload.
+  * Report mouse position to console programs
+
+ -- Daniel Patrick Abrecht <deb@danielabrecht.ch>  Sun, 24 Feb 2019 15:10:24 +0000
+
+consolation (0.0.6-2) unstable; urgency=medium
+
+  * New upstream release
+  * debian/control:
+    - Bump Standards-Version to 4.1.2
+  * debian/init.d: apply patch from Yuri D'Elia to fix slow restart
+    Closes: #883087
+
+ -- Bill Allombert <ballombe@debian.org>  Sat, 27 Jan 2018 22:26:05 +0100
+
+consolation (0.0.5-1) unstable; urgency=medium
+
+  * New upstream release
+    - Change --speed option to --set-speed to match libinput.
+      Closes: #849107
+    - Add support for select by word. Suggested by Piotr Engelking
+      Closes: #852242
+  * debian/control:
+    - Bump Standards-Version to 4.0.0
+
+ -- Bill Allombert <ballombe@debian.org>  Thu, 29 Jun 2017 00:57:35 +0200
+
+consolation (0.0.4-1) unstable; urgency=medium
+
+  * New upstream release
+   - New option --word-chars for configuring word selection.
+     by Adam Borowski. Closes: #846587
+
+ -- Bill Allombert <ballombe@debian.org>  Sun, 11 Dec 2016 21:28:39 +0100
+
+consolation (0.0.3-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Bill Allombert <ballombe@debian.org>  Wed, 09 Nov 2016 17:48:55 +0100
+
+consolation (0.0.2-2) unstable; urgency=medium
+
+  * debian/control:
+  - add missing dependency on lsb-base (>= 3.0-6).
+  * debian/clean: add consolation.8
+
+ -- Bill Allombert <ballombe@debian.org>  Sun, 16 Oct 2016 14:33:41 +0200
+
+consolation (0.0.2-1) unstable; urgency=medium
+
+  * New upstream release.
+    - This release fixes detection of the linux console size.
+    Closes: #834994. Thanks T. Joseph Carter.
+  * Fix debian/init.d to use DAEMON_OPTS instead of DAEMON_ARGS.
+    Closes: #835539. Thanks Pascal Dormeau.
+
+ -- Bill Allombert <ballombe@debian.org>  Sun, 28 Aug 2016 19:15:02 +0200
+
+consolation (0.0.1-1) unstable; urgency=medium
+
+  * Initial release (Closes: #833684)
+
+ -- Bill Allombert <ballombe@debian.org>  Sun, 07 Aug 2016 11:44:10 +0200

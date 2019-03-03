@@ -1,0 +1,6 @@
+consolation*/
+tmp/
+files
+*.substvars
+*.log
+autoreconf.*

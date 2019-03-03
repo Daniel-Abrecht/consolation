@@ -1,0 +1,39 @@
+[NAME]
+  consolation -- copy-paste for the Linux console
+[SYNOPSIS]
+  consolation [libinput options]
+
+[DESCRIPTION]
+  Consolation is a daemon that provide copy-paste and scrolling support to the
+  Linux console.
+
+  It is based on the libinput library and supports all pointer devices and
+  settings provided by this library,
+
+  Similar software include gpm and jamd.
+
+  Operations:
+  left button:    start selection
+  middle button:  paste selection
+  right button:   set end of selection
+  wheel:          scroll
+  double left click: select word
+                     (see --word-chars for the definition of a word.)
+  triple left click: select line
+
+  It supports all the standard libinput options
+
+[LICENSE]
+  Copyright \(co 2016 Bill Allombert
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
+
+[SEE ALSO]
+  gpm(8)
+[AUTHOR]
+  Bill Allombert <ballombe@debian.org>
+[HOMEPAGE]
+  https://alioth.debian.org/projects/consolation/

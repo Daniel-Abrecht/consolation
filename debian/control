@@ -1,0 +1,16 @@
+Source: consolation
+Section: misc
+Priority: optional
+Maintainer: Bill Allombert <ballombe@debian.org>
+Build-Depends: debhelper (>= 9), autotools-dev, pkg-config, libinput-dev, libudev-dev, libevdev-dev, help2man
+Standards-Version: 4.1.2
+Homepage: https://alioth.debian.org/projects/consolation/
+
+Package: consolation
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, lsb-base (>= 3.0-6)
+Description: linux console pointer support for copy-paste
+ This package provides copy-paste and scrolling support to the Linux console.
+ .  
+ It is based on the libinput library and supports all pointer devices and
+ settings provided by this library.
