@@ -78,7 +78,7 @@ linux_selection(int xs, int ys, int xe, int ye, int sel_mode)
 void
 report_pointer(int x, int y, enum current_button button)
 {
-  linux_selection(x, y, x, y, TIOCL_SELMOUSEREPORT + ((button+3) % 4) );
+  linux_selection(x, y, x, y, TIOCL_SELMOUSEREPORT + button );
 }
 
 void

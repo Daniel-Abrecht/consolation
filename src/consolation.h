@@ -20,10 +20,10 @@
 extern int nodaemon;
 
 enum current_button {
-  BUTTON_RELEASED,
   BUTTON_LEFT,
   BUTTON_MIDDLE,
-  BUTTON_RIGHT
+  BUTTON_RIGHT,
+  BUTTON_RELEASED
 };
 
 /* global state */
