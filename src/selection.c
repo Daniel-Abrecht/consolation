@@ -22,6 +22,7 @@
 #include <linux/tiocl.h>
 #include <stdint.h>
 #include <linux/kd.h>
+#include <errno.h>
 
 #include "consolation.h"
 
@@ -61,8 +62,16 @@ linux_selection(int xs, int ys, int xe, int ye, int sel_mode)
   s.sel.sel_mode = sel_mode;
   fd = open("/dev/tty0",O_RDONLY);
   if (check_mode(fd))
-    if (ioctl(fd, TIOCLINUX, ((char*)&s)+1)<0)
+  {
+    int err = ioctl(fd, TIOCLINUX, ((char*)&s)+1);
+    if (err<0 && !(errno==EINVAL && (sel_mode&TIOCL_SELMOUSEREPORT)))
+    /* The kernel return EINVAL for TIOCL_SELMOUSEREPORT when
+       TIOCL_GETMOUSEREPORTING reports 0. Unfortunately this cannot be
+       checked without race conditions, so it is simpler to ignore the
+       error.
+     */
       perror("selection: TIOCLINUX");
+  }
   close(fd);
 }
 
