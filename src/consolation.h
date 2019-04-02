@@ -26,14 +26,23 @@ enum current_button {
   BUTTON_RELEASED
 };
 
+enum mouse_reporting_mode {
+  MOUSE_REPORTING_OFF,
+  MOUSE_REPORTING_X10,
+  MOUSE_REPORTING_X11,
+  MOUSE_REPORTING_MODE_COUNT
+};
+
 /* global state */
 
 extern unsigned int screen_width;
 extern unsigned int screen_height;
+extern enum mouse_reporting_mode mouse_reporting;
 
 /* selection.c */
 
 void set_screen_size(void);
+void set_mouse_reporting(void);
 void report_pointer(int x, int y, enum current_button button);
 void draw_pointer(int x, int y);
 void select_region(int x, int y, int x2, int y2);
@@ -50,6 +59,7 @@ void move_pointer(double x, double y);
 void press_left_button(void);
 void release_left_button(void);
 void press_middle_button(void);
+void release_middle_button(void);
 void press_right_button(void);
 void release_right_button(void);
 void vertical_axis(double v);

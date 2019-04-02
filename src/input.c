@@ -46,6 +46,7 @@
 int nodaemon = false;
 unsigned int screen_width;
 unsigned int screen_height;
+enum mouse_reporting_mode mouse_reporting = MOUSE_REPORTING_OFF;
 
 static struct tools_options options;
 static unsigned int stop = 0;
@@ -92,6 +93,8 @@ handle_pointer_button_event(struct libinput_event *ev)
   case BTN_MIDDLE:
     if (state==LIBINPUT_BUTTON_STATE_PRESSED)
       press_middle_button();
+    else
+      release_middle_button();
     break;
   case BTN_RIGHT:
     if (state==LIBINPUT_BUTTON_STATE_PRESSED)
