@@ -45,6 +45,29 @@ set_screen_size(void)
   screen_height = s.ws_row;
 }
 
+void
+set_mouse_reporting(void){
+  int fd = open("/dev/tty0",O_RDONLY);
+  if (fd == -1)
+  {
+    perror("open /dev/tty0");
+    return;
+  }
+  unsigned char request = TIOCL_GETMOUSEREPORTING;
+  if (ioctl(fd, TIOCLINUX, &request))
+  {
+    perror("TIOCLINUX, TIOCL_GETMOUSEREPORTING");
+    request = MOUSE_REPORTING_OFF;
+  }
+  close(fd);
+  if (request >= MOUSE_REPORTING_MODE_COUNT)
+  {
+    fprintf(stderr, "mouse reporting mode %d not supported\n", (int)request);
+    request = MOUSE_REPORTING_OFF;
+  }
+  mouse_reporting = request;
+}
+
 static void
 linux_selection(int xs, int ys, int xe, int ye, int sel_mode)
 {
@@ -78,6 +101,7 @@ linux_selection(int xs, int ys, int xe, int ye, int sel_mode)
 void
 report_pointer(int x, int y, enum current_button button)
 {
+  linux_selection(x, y, x, y, TIOCL_SELCLEAR);
   linux_selection(x, y, x, y, TIOCL_SELMOUSEREPORT + button );
 }
 

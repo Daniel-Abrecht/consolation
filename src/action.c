@@ -65,49 +65,115 @@ move_pointer(double x, double y)
 void
 press_left_button(void)
 {
-  button = BUTTON_LEFT;
-  report_pointer((int)xx,(int)yy,button);
-  if ((int)x1==(int)xx && (int)y1==(int)yy)
+  set_mouse_reporting();
+  if (mouse_reporting != MOUSE_REPORTING_OFF)
   {
-    mode = (mode+1)%3;
-    select_mode(mode,(int)xx,(int)yy,(int)xx,(int)yy);
+    button = BUTTON_LEFT;
+    mode = 0;
+    x0=-1; y0=-1;
+    report_pointer((int)xx,(int)yy,button);
   }
   else
   {
-    mode = 0;
-    select_region((int)xx,(int)yy,(int)xx,(int)yy);
+    if ((int)x1==(int)xx && (int)y1==(int)yy)
+    {
+      mode = (mode+1)%3;
+      select_mode(mode,(int)xx,(int)yy,(int)xx,(int)yy);
+    }
+    else
+    {
+      mode = 0;
+      select_region((int)xx,(int)yy,(int)xx,(int)yy);
+    }
+    x0=xx; y0=yy; x1=x0; y1=y0;
   }
-  x0=xx; y0=yy; x1=x0; y1=y0;
 }
 
 void
 release_left_button(void)
 {
-  button = BUTTON_RELEASED;
-  report_pointer((int)xx,(int)yy,button);
+  /* if mouse reporting was on after last button press, check if it still is.
+   * If it is still on, continue as normal. If it isn't, don't do anything.
+   * If it was off, don't recheck and finish any current selection in any case */
+  if (mouse_reporting != MOUSE_REPORTING_OFF)
+  {
+    set_mouse_reporting();
+    if (mouse_reporting == MOUSE_REPORTING_OFF)
+      return;
+  }
+  if (mouse_reporting == MOUSE_REPORTING_X11)
+  {
+    button = BUTTON_RELEASED;
+    report_pointer((int)xx,(int)yy,button);
+  }
   x0=-1; y0=-1;
 }
 
 void
 press_middle_button(void)
 {
-  paste();
+  set_mouse_reporting();
+  if (mouse_reporting != MOUSE_REPORTING_OFF)
+  {
+    button = BUTTON_MIDDLE;
+    mode = 0;
+    x0=-1; y0=-1;
+    report_pointer((int)xx,(int)yy,button);
+  }
+  else
+  {
+    paste();
+  }
+}
+
+void
+release_middle_button(void)
+{
+  if (mouse_reporting != MOUSE_REPORTING_OFF)
+  {
+    set_mouse_reporting();
+    if (mouse_reporting == MOUSE_REPORTING_OFF)
+      return;
+  }
+  if (mouse_reporting == MOUSE_REPORTING_X11)
+  {
+    button = BUTTON_RELEASED;
+    report_pointer((int)xx,(int)yy,button);
+  }
 }
 
 void
 press_right_button(void)
 {
-  button = BUTTON_RIGHT;
-  report_pointer((int)xx,(int)yy,button);
-  if (x1>=0 && y1>=0)
-    select_region((int)xx,(int)yy,(int)x1,(int)y1);
+  set_mouse_reporting();
+  if (mouse_reporting != MOUSE_REPORTING_OFF)
+  {
+    button = BUTTON_RIGHT;
+    mode = 0;
+    x0=-1; y0=-1;
+    report_pointer((int)xx,(int)yy,button);
+  }
+  else
+  {
+    if (x1>=0 && y1>=0)
+      select_region((int)xx,(int)yy,(int)x1,(int)y1);
+  }
 }
 
 void
 release_right_button(void)
 {
-  button = BUTTON_RELEASED;
-  report_pointer((int)xx,(int)yy,button);
+  if (mouse_reporting != MOUSE_REPORTING_OFF)
+  {
+    set_mouse_reporting();
+    if (mouse_reporting == MOUSE_REPORTING_OFF)
+      return;
+  }
+  if (mouse_reporting == MOUSE_REPORTING_X11)
+  {
+    button = BUTTON_RELEASED;
+    report_pointer((int)xx,(int)yy,button);
+  }
 }
 
 void
