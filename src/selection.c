@@ -35,23 +35,23 @@ check_mode(int fd)
 }
 
 void
-set_screen_size(void)
+set_screen_size_and_mouse_reporting(void)
 {
   struct winsize s;
-  int fd = open("/dev/tty0",O_RDONLY);
-  if (ioctl(fd, TIOCGWINSZ, &s)) perror("TIOCGWINSZ");
-  close(fd);
-  screen_width  = s.ws_col;
-  screen_height = s.ws_row;
-}
-
-void
-set_mouse_reporting(void){
   int fd = open("/dev/tty0",O_RDONLY);
   if (fd == -1)
   {
     perror("open /dev/tty0");
     return;
+  }
+  if (ioctl(fd, TIOCGWINSZ, &s))
+  {
+    perror("TIOCGWINSZ");
+  }
+  else
+  {
+    screen_width  = s.ws_col;
+    screen_height = s.ws_row;
   }
   unsigned char request = TIOCL_GETMOUSEREPORTING;
   if (ioctl(fd, TIOCLINUX, &request))
@@ -66,6 +66,7 @@ set_mouse_reporting(void){
     request = MOUSE_REPORTING_OFF;
   }
   mouse_reporting = request;
+  close(fd);
 }
 
 static void

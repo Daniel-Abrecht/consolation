@@ -151,7 +151,7 @@ handle_events(struct libinput *li)
   struct libinput_event *ev;
 
   libinput_dispatch(li);
-  set_screen_size();
+  set_screen_size_and_mouse_reporting();
   while ((ev = libinput_get_event(li))) {
 
     switch (libinput_event_get_type(ev)) {

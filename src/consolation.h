@@ -41,8 +41,7 @@ extern enum mouse_reporting_mode mouse_reporting;
 
 /* selection.c */
 
-void set_screen_size(void);
-void set_mouse_reporting(void);
+void set_screen_size_and_mouse_reporting(void);
 void report_pointer(int x, int y, enum current_button button);
 void draw_pointer(int x, int y);
 void select_region(int x, int y, int x2, int y2);
