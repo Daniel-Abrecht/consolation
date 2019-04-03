@@ -19,6 +19,7 @@
 
 static double xx=1, yy=1, x0=-1, y0=-1, x1=-1, y1=-1;
 static int mode = 0;
+static enum current_button button = BUTTON_RELEASED;
 
 void
 set_pointer(double x, double y)
@@ -64,6 +65,8 @@ move_pointer(double x, double y)
 void
 press_left_button(void)
 {
+  button = BUTTON_LEFT;
+  report_pointer((int)xx,(int)yy,button);
   if ((int)x1==(int)xx && (int)y1==(int)yy)
   {
     mode = (mode+1)%3;
@@ -80,6 +83,8 @@ press_left_button(void)
 void
 release_left_button(void)
 {
+  button = BUTTON_RELEASED;
+  report_pointer((int)xx,(int)yy,button);
   x0=-1; y0=-1;
 }
 
@@ -92,8 +97,17 @@ press_middle_button(void)
 void
 press_right_button(void)
 {
+  button = BUTTON_RIGHT;
+  report_pointer((int)xx,(int)yy,button);
   if (x1>=0 && y1>=0)
     select_region((int)xx,(int)yy,(int)x1,(int)y1);
+}
+
+void
+release_right_button(void)
+{
+  button = BUTTON_RELEASED;
+  report_pointer((int)xx,(int)yy,button);
 }
 
 void

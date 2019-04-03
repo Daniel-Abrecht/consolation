@@ -19,6 +19,13 @@
 
 extern int nodaemon;
 
+enum current_button {
+  BUTTON_LEFT,
+  BUTTON_MIDDLE,
+  BUTTON_RIGHT,
+  BUTTON_RELEASED
+};
+
 /* global state */
 
 extern unsigned int screen_width;
@@ -27,6 +34,7 @@ extern unsigned int screen_height;
 /* selection.c */
 
 void set_screen_size(void);
+void report_pointer(int x, int y, enum current_button button);
 void draw_pointer(int x, int y);
 void select_region(int x, int y, int x2, int y2);
 void select_words(int x, int y, int x2, int y2);
@@ -43,6 +51,7 @@ void press_left_button(void);
 void release_left_button(void);
 void press_middle_button(void);
 void press_right_button(void);
+void release_right_button(void);
 void vertical_axis(double v);
 
 /* input.c */

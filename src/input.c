@@ -96,6 +96,8 @@ handle_pointer_button_event(struct libinput_event *ev)
   case BTN_RIGHT:
     if (state==LIBINPUT_BUTTON_STATE_PRESSED)
       press_right_button();
+    else
+      release_right_button();
     break;
   }
 }
