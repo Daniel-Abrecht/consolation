@@ -27,6 +27,11 @@ set_pointer(double x, double y)
   xx = x+1; yy = y+1;
   if (xx < 1) xx = 1; else if (xx > screen_width)  xx = screen_width;
   if (yy < 1) yy = 1; else if (yy > screen_height) yy = screen_height;
+  if (mouse_reporting != MOUSE_REPORTING_OFF)
+  {
+    x0 = -1; y0 = -1;
+    mode = 0;
+  }
   if (x0 >= 0 && y0 >= 0)
     select_region((int)xx,(int)yy,(int)x0,(int)y0);
   else
@@ -56,6 +61,11 @@ move_pointer(double x, double y)
   xx += x/20; yy += y/20;
   if (xx < 1) xx = 1; else if (xx > screen_width)  xx = screen_width;
   if (yy < 1) yy = 1; else if (yy > screen_height) yy = screen_height;
+  if (mouse_reporting != MOUSE_REPORTING_OFF)
+  {
+    x0 = -1; y0 = -1;
+    mode = 0;
+  }
   if (x0 >= 0 && y0 >= 0)
     select_mode(mode,(int)xx,(int)yy,(int)x0,(int)y0);
   else
@@ -65,12 +75,9 @@ move_pointer(double x, double y)
 void
 press_left_button(void)
 {
-  set_mouse_reporting();
   if (mouse_reporting != MOUSE_REPORTING_OFF)
   {
     button = BUTTON_LEFT;
-    mode = 0;
-    x0=-1; y0=-1;
     report_pointer((int)xx,(int)yy,button);
   }
   else
@@ -92,15 +99,6 @@ press_left_button(void)
 void
 release_left_button(void)
 {
-  /* if mouse reporting was on after last button press, check if it still is.
-   * If it is still on, continue as normal. If it isn't, don't do anything.
-   * If it was off, don't recheck and finish any current selection in any case */
-  if (mouse_reporting != MOUSE_REPORTING_OFF)
-  {
-    set_mouse_reporting();
-    if (mouse_reporting == MOUSE_REPORTING_OFF)
-      return;
-  }
   if (mouse_reporting == MOUSE_REPORTING_X11)
   {
     button = BUTTON_RELEASED;
@@ -112,12 +110,9 @@ release_left_button(void)
 void
 press_middle_button(void)
 {
-  set_mouse_reporting();
   if (mouse_reporting != MOUSE_REPORTING_OFF)
   {
     button = BUTTON_MIDDLE;
-    mode = 0;
-    x0=-1; y0=-1;
     report_pointer((int)xx,(int)yy,button);
   }
   else
@@ -129,12 +124,6 @@ press_middle_button(void)
 void
 release_middle_button(void)
 {
-  if (mouse_reporting != MOUSE_REPORTING_OFF)
-  {
-    set_mouse_reporting();
-    if (mouse_reporting == MOUSE_REPORTING_OFF)
-      return;
-  }
   if (mouse_reporting == MOUSE_REPORTING_X11)
   {
     button = BUTTON_RELEASED;
@@ -145,12 +134,9 @@ release_middle_button(void)
 void
 press_right_button(void)
 {
-  set_mouse_reporting();
   if (mouse_reporting != MOUSE_REPORTING_OFF)
   {
     button = BUTTON_RIGHT;
-    mode = 0;
-    x0=-1; y0=-1;
     report_pointer((int)xx,(int)yy,button);
   }
   else
@@ -163,12 +149,6 @@ press_right_button(void)
 void
 release_right_button(void)
 {
-  if (mouse_reporting != MOUSE_REPORTING_OFF)
-  {
-    set_mouse_reporting();
-    if (mouse_reporting == MOUSE_REPORTING_OFF)
-      return;
-  }
   if (mouse_reporting == MOUSE_REPORTING_X11)
   {
     button = BUTTON_RELEASED;
